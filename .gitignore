@@ -1,0 +1,13 @@
+# Compiled Executables
+scanner
+
+# Object Files
+*.o
+src/**/*.o
+
+# Generated Lexer Source
+src/lexer/lex.yy.c
+
+# Temp/Backup files
+*~
+.DS_Store
