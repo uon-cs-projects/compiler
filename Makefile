@@ -1,6 +1,7 @@
 # --- OS Detection Logic ---
 ifeq ($(OS),Windows_NT)
     # Settings for Windows (MinGW/CMD)
+    SHELL := cmd.exe
     RM = del /Q /F
     EXE = .exe
     # We use backslashes for 'del' but forward slashes work for GCC
