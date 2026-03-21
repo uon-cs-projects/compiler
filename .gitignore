@@ -1,5 +1,7 @@
 # Compiled Executables
 scanner
+.exe
+
 
 # Object Files
 *.o
