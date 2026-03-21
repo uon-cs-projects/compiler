@@ -62,7 +62,7 @@ make
 # On Windows (PowerShell/CMD)
 mingw32-make
 ```
-If for some reason you are running both linix and windows on the same folder always use ```bash make clean``` or ```bash mingw32-make clean``` to delete the object files and trigger a fresh build
+If for some reason you are running both linux and windows on the same folder always use ```bash make clean``` or ```bash mingw32-make clean``` to delete the object files and trigger a fresh build
 ## Running the Scanner
 
 To scan a source file (e.g., `test_code.txt`), use:
