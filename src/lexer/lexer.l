@@ -103,6 +103,9 @@ const char* get_token_name(int token) {
         case T_ELSEIF: return "T_ELSEIF";
         case T_PRINT:  return "T_PRINT";
         case T_RETURN: return "T_RETURN";
+        case T_WHILE:   return "T_WHILE";  /* Added this */
+        case T_FOR:     return "T_FOR";    /* Added this */
+        case T_BREAK:   return "T_BREAK";  /* Added this */
         case T_ID:     return "T_ID";
         case T_INT:    return "T_INT";
         case T_STR:    return "T_STR";
