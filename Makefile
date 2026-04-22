@@ -1,13 +1,10 @@
 # --- OS Detection Logic ---
 ifeq ($(OS),Windows_NT)
-    # Settings for Windows (MinGW/CMD)
     SHELL := cmd.exe
     RM = del /Q /F
     EXE = .exe
-    # We use backslashes for 'del' but forward slashes work for GCC
-    CLEAN_CMD = $(RM) scanner$(EXE) *.o src\lexer\lex.yy.c src\lexer\*.o src\symbol_table\*.o src\error_handler\*.o
+    CLEAN_CMD = $(RM) scanner$(EXE) *.o src\lexer\lex.yy.c src\lexer\*.o src\symbol_table\*.o src\error_handler\*.o src\parser\*.o
 else
-    # Settings for Linux/macOS/WSL
     RM = rm -f
     EXE =
     CLEAN_CMD = $(RM) $(TARGET) $(OBJS) $(GEN_SRC)
@@ -24,7 +21,10 @@ SRCS = src/symbol_table/symbol_table.c \
        src/error_handler/error_handler.c \
        src/parser/grammar.c \
        src/parser/first_follow.c \
-       src/parser/parse_table.c
+       src/parser/parse_table.c \
+       src/parser/token_stream.c \
+       src/parser/parse_tree.c \
+       src/parser/parser.c
 LEX_FILE = src/lexer/lexer.l
 GEN_SRC = src/lexer/lex.yy.c
 OBJS = src/symbol_table/symbol_table.o \
@@ -32,7 +32,10 @@ OBJS = src/symbol_table/symbol_table.o \
        src/lexer/lex.yy.o \
        src/parser/grammar.o \
        src/parser/first_follow.o \
-       src/parser/parse_table.o
+       src/parser/parse_table.o \
+       src/parser/token_stream.o \
+       src/parser/parse_tree.o \
+       src/parser/parser.o
 TARGET = scanner$(EXE)
 
 # --- Build Rules ---
