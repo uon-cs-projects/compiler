@@ -2,7 +2,6 @@
 #include "error_handler.h"
 
 #include "error_handler.h"
-#include "../parser/token_stream.h"
 #include "../parser/first_follow.h"
 
 #include "tokens.h"

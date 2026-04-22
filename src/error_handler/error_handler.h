@@ -2,6 +2,7 @@
 #define ERROR_HANDLER_H
 
 #include "../parser/shared_types.h"
+#include "../parser/token_stream.h"
 #include "../parser/grammar.h"
 
 extern int error_count;
