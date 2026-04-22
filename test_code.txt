@@ -1,4 +1,4 @@
-def add(a, b) { def_
+def add(a, b) { 
 result = a + b 
 return result
 }
@@ -37,4 +37,4 @@ is_valid = (b != 0) and (result
 >= 0)
 is_zero = (result == 0) or (b ==
 0)
-is_negative = not (result > 0) .
+is_negative = not (result > 0) 

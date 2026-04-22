@@ -56,7 +56,7 @@ void print_tree(const ParseTreeNode *node,
                 const char *prefix, bool is_last) {
     if (!node) return;
 
-    printf("%s%s", prefix, is_last ? "└── " : "├── ");
+    printf("%s%s", prefix, is_last ? "\\-- " : "|-- ");
 
     if (node->is_terminal)
         /* Show token type index alongside the lexeme */
@@ -67,7 +67,7 @@ void print_tree(const ParseTreeNode *node,
     /* Build the prefix for children */
     char new_prefix[512];
     snprintf(new_prefix, sizeof(new_prefix),
-             "%s%s", prefix, is_last ? "    " : "│   ");
+             "%s%s", prefix, is_last ? "    " : "|   ");
 
     for (int i = 0; i < node->num_children; i++)
         print_tree(node->children[i], new_prefix,

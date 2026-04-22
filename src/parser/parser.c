@@ -102,7 +102,7 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
             for (int i = 0; i < prod->len; i++) {
                 Symbol s = prod->rhs[i];
                 if (s.kind == SYM_EPSILON)
-                    children[i] = node_new_internal("ε");
+                    children[i] = node_new_internal("eps");
                 else if (s.kind == SYM_TERMINAL)
                     children[i] = node_new_internal("?"); /* filled on MATCH */
                 else
@@ -117,7 +117,7 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
 
             /* ε-production: nothing to push, add leaf and continue */
             if (prod->len == 0) {
-                ParseTreeNode *eps = node_new_internal("ε");
+                ParseTreeNode *eps = node_new_internal("eps");
                 node_add_child(top_node, eps);
             }
             continue;
