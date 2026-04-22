@@ -1,0 +1,8 @@
+{
+    total = 100
+    {
+        increment = 5
+        total = total + increment
+    }
+    print(total)
+}
