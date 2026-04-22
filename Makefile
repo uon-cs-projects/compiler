@@ -10,7 +10,7 @@ CLEAN_CMD = $(RM) compiler$(EXE) *.o lexer_adapter.o main.o src/lexer/lex.yy.c s
 # --- Compiler Configuration ---
 CC      = gcc
 LEX     = flex
-CFLAGS  = -Wall -Wextra -std=c99 -g
+CFLAGS  = -Wall -Wextra -std=gnu99 -g
 INCLUDES = -Isrc -Isrc/lexer -Isrc/symbol_table -Isrc/error_handler -Isrc/parser -I.
 
 # --- File Paths ---
