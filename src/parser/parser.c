@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "parse_table.h"
 #include "../error_handler/error_handler.h"
+#include "../parser/error_handler.h"
 #include <stdio.h>
 #include <string.h>
 
