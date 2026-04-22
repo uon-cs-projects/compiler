@@ -17,3 +17,4 @@ src/lexer/lex.yy.c
 # temp project files
 compiler
 structure.txt
+test_code.txt
