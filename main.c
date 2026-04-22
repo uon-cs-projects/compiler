@@ -73,6 +73,12 @@ int main(int argc, char **argv) {
 
     /* 4.5. Semantic Analysis / Symbol Table Pass Placeholder  */
     /* tree = semantic_analyze(tree); */
+    /* ADD THESE LINES TO SEE YOUR PARSER'S ENGINE DATA */
+    printf("\n=== GRAMMAR ANALYSIS ===\n");
+    print_first_sets();
+    print_follow_sets();
+    print_parse_table();
+    printf("========================\n\n");
 
     /* ── 5. Output ───────────────────────────────────────────── */
     if (tree && error_count == 0) {
