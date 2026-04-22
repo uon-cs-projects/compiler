@@ -17,14 +17,22 @@ endif
 CC = gcc
 LEX = flex
 CFLAGS = -Wall -g
-INCLUDES = -Isrc/lexer -Isrc/symbol_table -Isrc/error_handler
+INCLUDES = -Isrc/lexer -Isrc/symbol_table -Isrc/error_handler -Isrc/parser
 
 # --- File Paths ---
-SRCS = src/symbol_table/symbol_table.c src/error_handler/error_handler.c
+SRCS = src/symbol_table/symbol_table.c \
+       src/error_handler/error_handler.c \
+       src/parser/grammar.c \
+       src/parser/first_follow.c \
+       src/parser/parse_table.c
 LEX_FILE = src/lexer/lexer.l
 GEN_SRC = src/lexer/lex.yy.c
-OBJS = src/symbol_table/symbol_table.o src/error_handler/error_handler.o src/lexer/lex.yy.o
-
+OBJS = src/symbol_table/symbol_table.o \
+       src/error_handler/error_handler.o \
+       src/lexer/lex.yy.o \
+       src/parser/grammar.o \
+       src/parser/first_follow.o \
+       src/parser/parse_table.o
 TARGET = scanner$(EXE)
 
 # --- Build Rules ---
