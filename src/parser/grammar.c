@@ -18,9 +18,9 @@ const char *NONTERMINAL_NAMES[NONTERMINAL_COUNT] = {
 Production PRODUCTIONS[MAX_PRODUCTIONS];
 int        NUM_PRODUCTIONS = 0;
 
-#define T(tok)  ((Symbol){ SYM_TERMINAL,    (tok)  })
-#define N(nt)   ((Symbol){ SYM_NONTERMINAL, (nt)   })
-#define EPS     ((Symbol){ SYM_EPSILON,     0      })
+#define T(tok)  ((GrammarSymbol){ SYM_TERMINAL,    (tok)  })
+#define N(nt)   ((GrammarSymbol){ SYM_NONTERMINAL, (nt)   })
+#define EPS     ((GrammarSymbol){ SYM_EPSILON,     0      })
 
 void grammar_init(void) {
     int i = 0;

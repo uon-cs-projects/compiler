@@ -48,9 +48,9 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-# Generate Lexer C code
+# Generate Lexer C code using redirection to bypass Flex path bugs
 $(GEN_SRC): $(LEX_FILE)
-	$(LEX) -o $(GEN_SRC) $(LEX_FILE)
+	$(LEX) -t $(LEX_FILE) > $(GEN_SRC)
 
 # Compile the generated Lexer
 src/lexer/lex.yy.o: $(GEN_SRC)

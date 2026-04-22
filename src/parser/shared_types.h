@@ -16,7 +16,7 @@ typedef enum {
 typedef struct {
     SymbolKind kind;
     int index; /* Holds Token ID for terminals, or NonterminalIndex for nonterminals */
-} Symbol;
+} GrammarSymbol;
 
 typedef struct {
     int id;

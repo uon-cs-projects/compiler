@@ -95,43 +95,7 @@ NEWLINE  \n
 
 %%
 
-const char* get_token_name(int token) {
-    switch (token) {
-        case T_DEF:    return "T_DEF";
-        case T_IF:     return "T_IF";
-        case T_ELSE:   return "T_ELSE";
-        case T_ELSEIF: return "T_ELSEIF";
-        case T_PRINT:  return "T_PRINT";
-        case T_RETURN: return "T_RETURN";
-        case T_WHILE:   return "T_WHILE";  /* Added this */
-        case T_FOR:     return "T_FOR";    /* Added this */
-        case T_BREAK:   return "T_BREAK";  /* Added this */
-        case T_ID:     return "T_ID";
-        case T_INT:    return "T_INT";
-        case T_STR:    return "T_STR";
-        case T_ASSIGN: return "T_ASSIGN";
-        case T_PLUS:   return "T_PLUS";
-        case T_MINUS:  return "T_MINUS";
-        case T_MULT:   return "T_MULT";
-        case T_DIV:    return "T_DIV";
-        case T_EQ:     return "T_EQ";
-        case T_NEQ:    return "T_NEQ";
-        case T_GT:     return "T_GT";
-        case T_LT:     return "T_LT";
-        case T_GE:     return "T_GE";
-        case T_LE:     return "T_LE";
-        case T_AND:    return "T_AND";
-        case T_OR:     return "T_OR";
-        case T_NOT:    return "T_NOT";
-        case T_LPAREN: return "T_LPAREN";
-        case T_RPAREN: return "T_RPAREN";
-        case T_LBRACE: return "T_LBRACE";
-        case T_RBRACE: return "T_RBRACE";
-        case T_COMMA:  return "T_COMMA";
-        case T_BOOL:   return "T_BOOL";
-        default:       return "UNKNOWN";
-    }
-}
+
 
 #ifdef STANDALONE_LEXER
 int main(int argc, char **argv) {

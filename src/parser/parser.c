@@ -7,7 +7,7 @@
 /* ── Stack helpers ─────────────────────────────────────────────── */
 static ParserStack stk;
 
-static void stack_push(Symbol sym, ParseTreeNode *node) {
+static void stack_push(GrammarSymbol sym, ParseTreeNode *node) {
     if (stk.top >= STACK_SIZE - 1) {
         fprintf(stderr, "Parser: stack overflow\n");
         return;
@@ -16,7 +16,7 @@ static void stack_push(Symbol sym, ParseTreeNode *node) {
     stk.tree_stack[  stk.top] = node;
 }
 
-static Symbol         stack_peek_sym (void) { return stk.sym_stack [stk.top]; }
+static GrammarSymbol         stack_peek_sym (void) { return stk.sym_stack [stk.top]; }
 static ParseTreeNode *stack_peek_node(void) { return stk.tree_stack[stk.top]; }
 static void           stack_pop      (void) { if (stk.top >= 0) stk.top--;    }
 
@@ -42,8 +42,8 @@ static void predict_error(int nt_idx, const Token *got) {
 ParseTreeNode *parser_parse(TokenStream *ts) {
     /* Initialise stack:  push $  then  push start-symbol  */
     stk.top = -1;
-    Symbol eof_sym   = { SYM_TERMINAL,    TOK_EOF    };
-    Symbol start_sym = { SYM_NONTERMINAL, NT_PROGRAM };
+    GrammarSymbol eof_sym   = { SYM_TERMINAL,    TOK_EOF    };
+    GrammarSymbol start_sym = { SYM_NONTERMINAL, NT_PROGRAM };
 
     ParseTreeNode *root = node_new_internal(NONTERMINAL_NAMES[NT_PROGRAM]);
 
@@ -53,7 +53,7 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
     Token *la = ts_peek(ts);    /* lookahead */
 
     while (stk.top >= 0) {
-        Symbol         top      = stack_peek_sym();
+        GrammarSymbol         top      = stack_peek_sym();
         ParseTreeNode *top_node = stack_peek_node();
 
         /* ── SUCCESS: both stack and input are at EOF ── */
@@ -109,7 +109,7 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
             /* (right-to-left push means left-to-right processing) */
             ParseTreeNode *children[MAX_RHS_LENGTH];
             for (int i = 0; i < prod->len; i++) {
-                Symbol s = prod->rhs[i];
+                GrammarSymbol s = prod->rhs[i];
                 if (s.kind == SYM_EPSILON)
                     children[i] = node_new_internal("eps");
                 else if (s.kind == SYM_TERMINAL)

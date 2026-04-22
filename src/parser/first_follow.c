@@ -6,7 +6,7 @@ bool first_sets [NONTERMINAL_COUNT][SET_SIZE];
 bool follow_sets[NONTERMINAL_COUNT][SET_SIZE];
 
 /* Implement FIRST*(alpha) */
-bool first_star(const Symbol *seq, int len, bool *out) {
+bool first_star(const GrammarSymbol *seq, int len, bool *out) {
     memset(out, 0, SET_SIZE * sizeof(bool));
     
     if (len == 0) {
@@ -94,7 +94,7 @@ void compute_follow(void) {
                 int A = prod->rhs[i].index;
 
                 /* ω = everything after position i */
-                const Symbol *omega = &prod->rhs[i + 1];
+                const GrammarSymbol *omega = &prod->rhs[i + 1];
                 int omega_len = prod->len - i - 1;
 
                 bool omega_first[SET_SIZE];

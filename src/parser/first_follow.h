@@ -15,7 +15,7 @@ void compute_follow(void);
 
 /* FIRST*(sequence) — applies FIRST* rules to a symbol sequence.
  * Fills 'out' (size SET_SIZE). Returns true if ε is in the result. */
-bool first_star(const Symbol *seq, int len, bool *out);
+bool first_star(const GrammarSymbol *seq, int len, bool *out);
 
 void print_first_sets (void);
 void print_follow_sets(void);

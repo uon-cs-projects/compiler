@@ -8,7 +8,7 @@
 #define STACK_SIZE 512
 
 typedef struct {
-    Symbol         sym_stack [STACK_SIZE]; /* grammar symbols         */
+    GrammarSymbol         sym_stack [STACK_SIZE]; /* grammar symbols         */
     ParseTreeNode *tree_stack[STACK_SIZE]; /* parallel tree nodes     */
     int            top;                    /* index of top (-1=empty) */
 } ParserStack;
