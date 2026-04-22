@@ -13,3 +13,7 @@ src/lexer/lex.yy.c
 # Temp/Backup files
 *~
 .DS_Store
+
+# temp project files
+compiler
+structure.txt
