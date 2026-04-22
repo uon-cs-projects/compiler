@@ -78,7 +78,8 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
                 la = ts_peek(ts);
             } else {
                 match_error(top.index, la);
-                return NULL;   /* hard stop — no panic recovery yet */
+                stack_pop(); /* pop the terminal and try to continue */
+                continue;
             }
             continue;
         }
@@ -89,7 +90,15 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
 
             if (prod_idx == -1) {
                 predict_error(top.index, la);
-                return NULL;
+                // Use your recovery function!
+                error_recover(top.index, ts); 
+                
+                // Update lookahead after recovery
+                la = ts_peek(ts);
+                
+                // Pop the non-terminal that failed so we can try the next thing on stack
+                stack_pop(); 
+                continue;
             }
 
             stack_pop(); /* pop the nonterminal */
@@ -136,7 +145,6 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
         snprintf(msg, sizeof(msg),
                  "Unexpected token '%s' after end of program", la->lexeme);
         report_error(la->line, "SYNTAX", msg);
-        return NULL;
     }
 
     return root;
