@@ -133,6 +133,7 @@ const char* get_token_name(int token) {
     }
 }
 
+#ifdef STANDALONE_LEXER
 int main(int argc, char **argv) {
     if (argc > 1) {
         if (!(yyin = fopen(argv[1], "r"))) {
@@ -158,3 +159,4 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+#endif

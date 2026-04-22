@@ -1,6 +1,6 @@
 #include "parser.h"
 #include "parse_table.h"
-#include "error_handler.h"
+#include "../error_handler/error_handler.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -26,7 +26,7 @@ static void match_error(int expected_tok, const Token *got) {
     char msg[256];
     snprintf(msg, sizeof(msg),
              "Expected token type %d but got '%s' (type %d)",
-             expected_tok, got->lexeme, got->type);
+             expected_tok, got->lexeme, got->id);
     report_error(got->line, "SYNTAX", msg);
 }
 
@@ -34,7 +34,7 @@ static void predict_error(int nt_idx, const Token *got) {
     char msg[256];
     snprintf(msg, sizeof(msg),
              "No production for '%s' with lookahead '%s' (type %d)",
-             NONTERMINAL_NAMES[nt_idx], got->lexeme, got->type);
+             NONTERMINAL_NAMES[nt_idx], got->lexeme, got->id);
     report_error(got->line, "SYNTAX", msg);
 }
 
@@ -59,13 +59,13 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
         /* ── SUCCESS: both stack and input are at EOF ── */
         if (top.kind  == SYM_TERMINAL &&
             top.index == TOK_EOF      &&
-            la->type  == TOK_EOF) {
+            la->id  == TOK_EOF) {
             return root;
         }
 
         /* ── MATCH: top is a terminal ─────────────────── */
         if (top.kind == SYM_TERMINAL) {
-            if (top.index == (int)la->type) {
+            if (top.index == (int)la->id) {
                 /* Fill in the leaf node with the actual token */
                 if (top_node) {
                     top_node->is_terminal = true;
@@ -85,7 +85,7 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
 
         /* ── PREDICT: top is a nonterminal ───────────── */
         if (top.kind == SYM_NONTERMINAL) {
-            int prod_idx = parse_table[top.index][la->type];
+            int prod_idx = parse_table[top.index][la->id];
 
             if (prod_idx == -1) {
                 predict_error(top.index, la);
@@ -131,7 +131,7 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
     }
 
     /* Stack drained but input not at EOF */
-    if (la->type != TOK_EOF) {
+    if (la->id != TOK_EOF) {
         char msg[128];
         snprintf(msg, sizeof(msg),
                  "Unexpected token '%s' after end of program", la->lexeme);
