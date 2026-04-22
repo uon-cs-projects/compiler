@@ -82,8 +82,8 @@ int main(int argc, char **argv) {
 
     /* ── 5. Output ───────────────────────────────────────────── */
     if (tree && error_count == 0) {
-        printf("\n=== PARSE SUCCESSFUL ===\n");
         print_tree(tree, "", true);
+        printf("\n=== PARSE SUCCESSFUL ===\n");
         return 0;
     } else {
         printf("\n=== PARSE FAILED (%d error(s)) ===\n", error_count);
