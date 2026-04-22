@@ -18,4 +18,10 @@ typedef struct {
     int index; /* Holds Token ID for terminals, or NonterminalIndex for nonterminals */
 } Symbol;
 
+typedef struct {
+    int id;
+    char *lexeme;
+    int line;
+} Token;
+
 #endif /* SHARED_TYPES_H */
