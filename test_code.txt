@@ -1,40 +1,6 @@
-def add(a, b) { def_
-result = a + b 
-return result
-}
-def subtract(a, b) {
-result = a - b
-return result
-}
-def multiply(a, b) {
-result = a * b
-return result
-}
-def divide(a, b) {
-if b == 0 {
-result = 0
-} else {
-result = a / b
-}
-return result
-}
 
 
 a = 20
 b = 4
-operator = "+"
-result = 0
-if (operator == "+") {
-result = add(a, b)
-} else if (operator == "-") {
-result = subtract(a, b)
-} else if (operator == "*") {
-result = multiply(a, b)
-} else if (operator == "/") {
-result = divide(a, b)
-}
-is_valid = (b != 0) and (result
->= 0)
-is_zero = (result == 0) or (b ==
-0)
-is_negative = not (result > 0) .
+sum = 20 + 4
+print(sum)
