@@ -60,7 +60,7 @@ void print_tree(const ParseTreeNode *node,
 
     if (node->is_terminal)
         /* Show token type index alongside the lexeme */
-        printf("[tok:%d] \"%s\"\n", node->token.type, node->token.lexeme);
+        printf("[tok:%d] \"%s\"\n", node->token.id, node->token.lexeme);
     else
         printf("%s\n", node->symbol);
 

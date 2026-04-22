@@ -12,7 +12,7 @@ void ts_init(TokenStream *ts, Token *arr, int count) {
     ts->pos   = 0;
 
     /* Ensure the last token is always EOF */
-    if (copy == 0 || ts->tokens[copy - 1].type != TOK_EOF) {
+    if (copy == 0 || ts->tokens[copy - 1].id != TOK_EOF) {
         ts->tokens[copy] = EOF_TOKEN;
         ts->count++;
     }

@@ -22,6 +22,7 @@ typedef struct {
     int id;
     char *lexeme;
     int line;
+    int col;
 } Token;
 
 #endif /* SHARED_TYPES_H */

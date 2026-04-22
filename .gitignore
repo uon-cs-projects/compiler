@@ -2,6 +2,7 @@
 scanner
 .exe
 scanner.exe
+compiler.exe
 
 # Object Files
 *.o
