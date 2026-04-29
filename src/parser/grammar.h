@@ -43,7 +43,7 @@ extern const char *NONTERMINAL_NAMES[NONTERMINAL_COUNT];
 
 typedef struct {
     NonterminalIndex lhs;
-    Symbol           rhs[MAX_RHS_LENGTH];
+    GrammarSymbol           rhs[MAX_RHS_LENGTH];
     int              len;     
 } Production;
 
