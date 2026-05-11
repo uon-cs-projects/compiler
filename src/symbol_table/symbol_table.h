@@ -1,52 +1,39 @@
 #ifndef SYMBOL_TABLE_H
 #define SYMBOL_TABLE_H
 
-typedef enum { 
-    TYPE_INT, 
-    TYPE_STR, 
-    TYPE_BOOL, 
-    TYPE_FUNC, 
-    TYPE_NONE 
-} DataType;
+#include "type_system.h"
 
-typedef struct Symbol {
-    char *name;             
-    int token_class;        
-    DataType data_type;     
-    
-    union {                
-        int i_val;
-        char *s_val;
-        int b_val;
-    } value;
+#define HASH_SIZE 211
 
-    int scope_level;        
-    int is_initialized;     
-
-    int memory_offset;      /* Relative to $sp$ */
-    int size;               
-    
+typedef struct SymbolRecord {
+    char name[64];
+    TypeNode *type;
+    int scope_level;
     int line_declared;
-    struct Symbol *next;    
-} Symbol;
+    struct SymbolRecord *next;
+} SymbolRecord;
 
-#define TABLE_SIZE 211 
+typedef struct ScopeFrame {
+    SymbolRecord *buckets[HASH_SIZE];
+    struct ScopeFrame *parent;
+} ScopeFrame;
 
-/* 1. Added the Scope Tracker as an 'extern' 
-   This lets the Lexer and Parser see the current 'room' number. */
-extern int current_scope; 
+typedef struct SymbolTable {
+    ScopeFrame *current;
+    int depth;
+} SymbolTable;
 
-unsigned int hash(char *str);
-Symbol* lookup(char *name);
+void symbol_table_init(SymbolTable *table);
+void symbol_table_destroy(SymbolTable *table);
 
-/* 2. Added the "Room-Specific" Lookup 
-   This is the 'Secret Sauce' that catches redeclaration errors. */
-Symbol* lookup_current_scope(char *name);
+void scope_enter(SymbolTable *table);
+void scope_exit(SymbolTable *table);
 
-/* We can keep 'scope' as a parameter for flexibility, 
-   or just use the global 'current_scope' inside the function. */
-Symbol* insert(char *name, int token_class, int line, int scope);
+unsigned int symbol_hash(const char *name);
+SymbolRecord *symbol_lookup_local(const ScopeFrame *frame, const char *name);
+SymbolRecord *symbol_lookup(const SymbolTable *table, const char *name);
+SymbolRecord *symbol_insert(SymbolTable *table, const char *name, TypeNode *type, int line);
 
-void print_symbol_table();
+void symbol_print(const SymbolTable *table);
 
 #endif

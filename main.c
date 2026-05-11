@@ -10,6 +10,8 @@
 #include "src/parser/token_stream.h"
 #include "src/parser/parser.h"
 #include "src/parser/parse_tree.h"
+#include "src/symbol_table/symbol_table.h"
+#include "src/symbol_table/type_system.h"
 #include "src/error_handler/error_handler.h"
 #include "lexer_adapter.h"
 
