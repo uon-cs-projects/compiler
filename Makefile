@@ -19,6 +19,8 @@ SRCS = main.c \
        src/symbol_table/symbol_table.c \
     src/symbol_table/type_system.c \
        src/error_handler/error_handler.c \
+       src/error_handler/error_context.c \
+       src/error_handler/error_hints.c \
        src/parser/grammar.c \
        src/parser/first_follow.c \
        src/parser/parse_table.c \
@@ -34,6 +36,8 @@ OBJS = main.o \
        src/symbol_table/symbol_table.o \
     src/symbol_table/type_system.o \
        src/error_handler/error_handler.o \
+       src/error_handler/error_context.o \
+       src/error_handler/error_hints.o \
        src/lexer/lex.yy.o \
        src/parser/grammar.o \
        src/parser/first_follow.o \

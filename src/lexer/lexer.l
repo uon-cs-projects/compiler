@@ -7,6 +7,7 @@
 #include "error_handler.h"  /* Added: For centralized error reporting */
 
 const char* get_token_name(int token);
+int yycolumn = 1;
 %}
 
 %option yylineno
@@ -21,24 +22,25 @@ NEWLINE  \n
 %%
 
     /* 1. Keywords */
-"def"           { return T_DEF; }
-"else if"       { return T_ELSEIF; }
-"else"          { return T_ELSE; }
-"if"            { return T_IF; }
-"while"         { return T_WHILE; }
-"for"           { return T_FOR; }
-"return"        { return T_RETURN; }
-"print"         { return T_PRINT; }
-"break"         { return T_BREAK; }
-"and"           { return T_AND; }
-"or"            { return T_OR; }
-"not"           { return T_NOT; }
+"def"           { yycolumn += yyleng; return T_DEF; }
+"else if"       { yycolumn += yyleng; return T_ELSEIF; }
+"else"          { yycolumn += yyleng; return T_ELSE; }
+"if"            { yycolumn += yyleng; return T_IF; }
+"while"         { yycolumn += yyleng; return T_WHILE; }
+"for"            { yycolumn += yyleng; return T_FOR; }
+"return"        { yycolumn += yyleng; return T_RETURN; }
+"print"         { yycolumn += yyleng; return T_PRINT; }
+"break"         { yycolumn += yyleng; return T_BREAK; }
+"and"           { yycolumn += yyleng; return T_AND; }
+"or"            { yycolumn += yyleng; return T_OR; }
+"not"           { yycolumn += yyleng; return T_NOT; }
 
     /* 2. Literals */
-"True"          { return T_BOOL; }
-"False"         { return T_BOOL; }
+"True"          { yycolumn += yyleng; return T_BOOL; }
+"False"         { yycolumn += yyleng; return T_BOOL; }
 
 {DIGIT}+{LETTER}+{ID}* { 
+    yycolumn += yyleng;
     char msg[100];
     snprintf(msg, sizeof(msg), "Invalid identifier '%s' - identifiers cannot start with a digit", yytext);
     report_error(yylineno, "LEXICAL", msg); 
@@ -49,6 +51,7 @@ NEWLINE  \n
 }
 
 {ID} { 
+    yycolumn += yyleng;
     /* 1. Look up the name first */
     Symbol *s = lookup(yytext);
 
@@ -59,34 +62,35 @@ NEWLINE  \n
     
     return T_ID; 
 }
-{DIGIT}+        { return T_INT; }
+{DIGIT}+        { yycolumn += yyleng; return T_INT; }
 
-\"[^\"\n]*\"    { return T_STR; }
+\"[^\"\n]*\"    { yycolumn += yyleng; return T_STR; }
 
     /* 3. Operators & Delimiters */
-"=="            { return T_EQ; }
-"!="            { return T_NEQ; }
-">="            { return T_GE; }
-"<="            { return T_LE; }
-">"             { return T_GT; }
-"<"             { return T_LT; }
-"="             { return T_ASSIGN; }
-"+"             { return T_PLUS; }
-"-"             { return T_MINUS; }
-"*"             { return T_MULT; }
-"/"             { return T_DIV; }
-"("             { return T_LPAREN; }
-")"             { return T_RPAREN; }
-"{"             { return T_LBRACE; }
-"}"             { return T_RBRACE; }
-"["             { return T_LBRACKET; }
-"]"             { return T_RBRACKET; }
-","             { return T_COMMA; }
+"=="            { yycolumn += yyleng; return T_EQ; }
+"!="            { yycolumn += yyleng; return T_NEQ; }
+">="            { yycolumn += yyleng; return T_GE; }
+"<="            { yycolumn += yyleng; return T_LE; }
+">"             { yycolumn += yyleng; return T_GT; }
+"<"             { yycolumn += yyleng; return T_LT; }
+"="             { yycolumn += yyleng; return T_ASSIGN; }
+"+"             { yycolumn += yyleng; return T_PLUS; }
+"-"             { yycolumn += yyleng; return T_MINUS; }
+"*"             { yycolumn += yyleng; return T_MULT; }
+"/"             { yycolumn += yyleng; return T_DIV; }
+"("             { yycolumn += yyleng; return T_LPAREN; }
+")"             { yycolumn += yyleng; return T_RPAREN; }
+"{"             { yycolumn += yyleng; return T_LBRACE; }
+"}"             { yycolumn += yyleng; return T_RBRACE; }
+"["             { yycolumn += yyleng; return T_LBRACKET; }
+"]"             { yycolumn += yyleng; return T_RBRACKET; }
+","             { yycolumn += yyleng; return T_COMMA; }
 
-{WS}            { /* Skip */ }
-{NEWLINE}       { /* Skip */ }
+{WS}            { yycolumn += yyleng; /* Skip */ }
+{NEWLINE}       { yycolumn = 1; /* Skip */ }
 
 .               { 
+                  yycolumn += yyleng;
                   /* LOGIC: Use the standardized error handler */
                   char msg[50];
                   sprintf(msg, "Unexpected character '%s'", yytext);

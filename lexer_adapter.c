@@ -8,6 +8,8 @@
 extern int yylex();
 extern char *yytext;
 extern int yylineno;
+extern int yycolumn;
+extern int yyleng;
 
 /* Flex functions to explicitly control string buffer parsing */
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
@@ -37,7 +39,7 @@ int lexer_adapter_run(const char *source_code, Token *out_tokens, int max_tokens
         /* strdup yytext so it's not overwritten on next run */
         out_tokens[count].lexeme = yytext ? strdup(yytext) : strdup("");
         out_tokens[count].line = yylineno;
-        out_tokens[count].col = 0; // The lexer doesn't track this.
+        out_tokens[count].col = yycolumn - yyleng; // Column at start of token
         count++;
     }
 
@@ -45,7 +47,7 @@ int lexer_adapter_run(const char *source_code, Token *out_tokens, int max_tokens
     out_tokens[count].id = TOK_EOF;
     out_tokens[count].lexeme = strdup("EOF");
     out_tokens[count].line = yylineno;
-    out_tokens[count].col = 0;
+    out_tokens[count].col = yycolumn;
     count++;
 
     yy_delete_buffer(buffer);
