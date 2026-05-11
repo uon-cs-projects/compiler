@@ -13,6 +13,8 @@
 #include "src/symbol_table/symbol_table.h"
 #include "src/symbol_table/type_system.h"
 #include "src/error_handler/error_handler.h"
+#include "src/parser/semantic/semantic.h"
+#include "src/icg/icg.h"
 #include "lexer_adapter.h"
 
 #define MAX_SOURCE 65536
@@ -73,22 +75,45 @@ int main(int argc, char **argv) {
 
     ParseTreeNode *tree = parser_parse(&ts, argv[1], source);
 
-    /* 4.5. Semantic Analysis / Symbol Table Pass Placeholder  */
-    /* tree = semantic_analyze(tree); */
-    /* ADD THESE LINES TO SEE YOUR PARSER'S ENGINE DATA */
+    /* ── 4.5  Grammar debug (engine data) ───────────────────── */
     printf("\n=== GRAMMAR ANALYSIS ===\n");
     print_first_sets();
     print_follow_sets();
     print_parse_table();
     printf("========================\n\n");
 
-    /* ── 5. Output ───────────────────────────────────────────── */
-    if (tree && error_count == 0) {
-        print_tree(tree, "", true);
-        printf("\n=== PARSE SUCCESSFUL ===\n");
-        return 0;
-    } else {
+    /* ── 5. Parse result check ───────────────────────────────── */
+    if (!tree || error_count > 0) {
         printf("\n=== PARSE FAILED (%d error(s)) ===\n", error_count);
         return 1;
     }
+
+    print_tree(tree, "", true);
+    printf("\n=== PARSE SUCCESSFUL ===\n");
+
+    /* ── 6. Semantic analysis ────────────────────────────────── */
+    SymbolTable sym_table;
+    symbol_table_init(&sym_table);
+
+    int sem_errors = semantic_analyse(tree, &sym_table);
+
+    symbol_print(&sym_table);   /* dump symbol table for demo */
+
+    if (sem_errors > 0) {
+        printf("\n=== SEMANTIC FAILED (%d error(s)) ===\n", sem_errors);
+        symbol_table_destroy(&sym_table);
+        return 1;
+    }
+    printf("\n=== SEMANTIC OK ===\n");
+
+    /* ── 7. Intermediate Code Generation ────────────────────── */
+    InstrList *ilist = icg_list_create();
+    icg_gen_stmt(tree, ilist);
+
+    printf("\n=== ICG QUADRUPLES ===\n");
+    icg_print_list(ilist);
+
+    icg_list_free(ilist);
+    symbol_table_destroy(&sym_table);
+    return 0;
 }

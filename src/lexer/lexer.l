@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "tokens.h"
-#include "symbol_table.h"   /* Added: For insert and current_scope */
 #include "error_handler.h"  /* Added: For centralized error reporting */
 
 const char* get_token_name(int token);
@@ -52,14 +51,6 @@ NEWLINE  \n
 
 {ID} { 
     yycolumn += yyleng;
-    /* 1. Look up the name first */
-    Symbol *s = lookup(yytext);
-
-    /* 2. Only call insert if it DOESN'T exist yet */
-    if (s == NULL) {
-        insert(yytext, T_ID, yylineno, current_scope); 
-    }
-    
     return T_ID; 
 }
 {DIGIT}+        { yycolumn += yyleng; return T_INT; }

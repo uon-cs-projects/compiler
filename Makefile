@@ -5,13 +5,13 @@ else
     EXE =
 endif
 RM = rm -f
-CLEAN_CMD = $(RM) compiler$(EXE) *.o lexer_adapter.o main.o src/lexer/lex.yy.c src/lexer/*.o src/symbol_table/*.o src/error_handler/*.o src/parser/*.o
+CLEAN_CMD = $(RM) compiler$(EXE) *.o lexer_adapter.o main.o src/lexer/lex.yy.c src/lexer/*.o src/symbol_table/*.o src/error_handler/*.o src/parser/*.o src/parser/semantic/*.o src/icg/*.o
 
 # --- Compiler Configuration ---
 CC      = gcc
 LEX     = flex
 CFLAGS  = -Wall -Wextra -std=gnu99 -g
-INCLUDES = -Isrc -Isrc/lexer -Isrc/symbol_table -Isrc/error_handler -Isrc/parser -I.
+INCLUDES = -Isrc -Isrc/lexer -Isrc/symbol_table -Isrc/error_handler -Isrc/parser -Isrc/parser/semantic -Isrc/icg -I.
 
 # --- File Paths ---
 SRCS = main.c \
@@ -26,6 +26,8 @@ SRCS = main.c \
        src/parser/parse_table.c \
        src/parser/token_stream.c \
        src/parser/parse_tree.c \
+       src/parser/semantic/semantic.c \
+       src/icg/icg.c \
        src/parser/parser.c
 
 LEX_FILE = src/lexer/lexer.l
@@ -44,6 +46,8 @@ OBJS = main.o \
        src/parser/parse_table.o \
        src/parser/token_stream.o \
        src/parser/parse_tree.o \
+       src/parser/semantic/semantic.o \
+       src/icg/icg.o \
        src/parser/parser.o
 
 TARGET  = compiler$(EXE)

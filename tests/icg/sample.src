@@ -1,0 +1,11 @@
+def add(a, b) {
+    result = a + b * 2
+    if result > 10 {
+        result = result - 1
+    } else {
+        result = 0
+    }
+    return result
+}
+
+x = add(5, 3)
