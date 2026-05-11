@@ -22,24 +22,16 @@ static void           stack_pop      (void) { if (stk.top >= 0) stk.top--;    }
 
 /* ── Error helpers (wrappers around error_handler) ─────────────── */
 
-static void match_error(int expected_tok, const Token *got) {
-    char msg[256];
-    snprintf(msg, sizeof(msg),
-             "Expected token type %d but got '%s' (type %d)",
-             expected_tok, got->lexeme, got->id);
-    report_error(got->line, "SYNTAX", msg);
+static void match_error(int expected_tok, const Token *got, const char *filename, const char *source_code) {
+    error_match(expected_tok, got, filename, source_code);
 }
 
-static void predict_error(int nt_idx, const Token *got) {
-    char msg[256];
-    snprintf(msg, sizeof(msg),
-             "No production for '%s' with lookahead '%s' (type %d)",
-             NONTERMINAL_NAMES[nt_idx], got->lexeme, got->id);
-    report_error(got->line, "SYNTAX", msg);
+static void predict_error(int nt_idx, const Token *got, const char *filename, const char *source_code) {
+    error_predict(nt_idx, got, filename, source_code);
 }
 
 /* ── Main parse function ───────────────────────────────────────── */
-ParseTreeNode *parser_parse(TokenStream *ts) {
+ParseTreeNode *parser_parse(TokenStream *ts, const char *filename, const char *source_code) {
     /* Initialise stack:  push $  then  push start-symbol  */
     stk.top = -1;
     GrammarSymbol eof_sym   = { SYM_TERMINAL,    TOK_EOF    };
@@ -77,7 +69,7 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
                 ts_consume(ts);
                 la = ts_peek(ts);
             } else {
-                match_error(top.index, la);
+                match_error(top.index, la, filename, source_code);
                 stack_pop(); /* pop the terminal and try to continue */
                 continue;
             }
@@ -89,7 +81,7 @@ ParseTreeNode *parser_parse(TokenStream *ts) {
             int prod_idx = parse_table[top.index][la->id];
 
             if (prod_idx == -1) {
-                predict_error(top.index, la);
+                predict_error(top.index, la, filename, source_code);
                 // Use your recovery function!
                 error_recover(top.index, ts); 
                 

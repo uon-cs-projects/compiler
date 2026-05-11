@@ -5,6 +5,8 @@
 #include "../parser/first_follow.h"
 
 #include "tokens.h"
+#include "error_context.h"
+#include "error_hints.h"
 
 int error_count = 0;
 int warning_count = 0;
@@ -70,26 +72,32 @@ const char* get_token_name(int token_id) {
     }
 }
 
-void error_match(int expected, const Token *got) {
+void error_match(int expected, const Token *got, const char *filename, const char *source_code) {
     error_count++;
-    fprintf(stderr, 
-        "\n[Syntax Error] Line %d:\n"
-        "  Expected: '%s'\n"
-        "  Found:    '%s' (\"%s\")\n",
-        got->line, 
-        get_token_name(expected), 
-        get_token_name(got->id), 
-        got->lexeme);
+    ErrorContext ctx;
+    error_context_build(&ctx, filename, got, source_code, 0); // err_code 0 for match error
+
+    fprintf(stderr, "error: unexpected token '%s' on line %d, column %d\n",
+            got->lexeme, ctx.line, ctx.col);
+    fprintf(stderr, "%d | %s\n", ctx.line, ctx.source_line);
+    fprintf(stderr, "   | %s\n", ctx.caret);
+    fprintf(stderr, "Expected: '%s'\n", get_token_name(expected));
+    fprintf(stderr, "Hint: %s\n", error_get_hint(ctx.err_code));
+    fprintf(stderr, "\n");
 }
 
-void error_predict(int nt_idx, const Token *got) {
+void error_predict(int nt_idx, const Token *got, const char *filename, const char *source_code) {
     error_count++;
-    fprintf(stderr,
-        "\n[Syntax Error] Line %d:\n"
-        "  Unexpected token '%s' (\"%s\") while parsing %s.\n",
-        got->line,
-        get_token_name(got->id), got->lexeme,
-        NONTERMINAL_NAMES[nt_idx]);
+    ErrorContext ctx;
+    error_context_build(&ctx, filename, got, source_code, 0); // err_code 0
+
+    fprintf(stderr, "error: unexpected token '%s' on line %d, column %d\n",
+            got->lexeme, ctx.line, ctx.col);
+    fprintf(stderr, "%d | %s\n", ctx.line, ctx.source_line);
+    fprintf(stderr, "   | %s\n", ctx.caret);
+    fprintf(stderr, "Unexpected token while parsing %s.\n", NONTERMINAL_NAMES[nt_idx]);
+    fprintf(stderr, "Hint: %s\n", error_get_hint(ctx.err_code));
+    fprintf(stderr, "\n");
 }
 
 Token *error_recover(int nt_idx, TokenStream *ts) {

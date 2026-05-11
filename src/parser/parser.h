@@ -17,6 +17,6 @@ typedef struct {
  * Run the LL(1) parse.
  * Returns: root of parse tree on success, NULL on any error.
  */
-ParseTreeNode *parser_parse(TokenStream *ts);
+ParseTreeNode *parser_parse(TokenStream *ts, const char *filename, const char *source_code);
 
 #endif /* PARSER_H */

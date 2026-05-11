@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     TokenStream ts;
     ts_init(&ts, tokens, tok_count);
 
-    ParseTreeNode *tree = parser_parse(&ts);
+    ParseTreeNode *tree = parser_parse(&ts, argv[1], source);
 
     /* 4.5. Semantic Analysis / Symbol Table Pass Placeholder  */
     /* tree = semantic_analyze(tree); */
