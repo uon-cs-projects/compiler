@@ -2,95 +2,156 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symbol_table.h"
-#include "error_handler.h"  /* The Command Center */
+#include "../error_handler/error_handler.h"
 
-int current_scope = 0;
-Symbol* hash_table[TABLE_SIZE];
+static void free_record_chain(SymbolRecord *head) {
+    SymbolRecord *cur = head;
+    while (cur != NULL) {
+        SymbolRecord *next = cur->next;
+        type_free(cur->type);
+        free(cur);
+        cur = next;
+    }
+}
 
-unsigned int hash(char *str) {
-    unsigned int h = 5381;
+unsigned int symbol_hash(const char *name) {
+    unsigned long h = 5381;
     int c;
-    while ((c = *str++))
-        h = ((h << 5) + h) + c; 
-    return h % TABLE_SIZE;
-}
 
-Symbol* lookup(char *name) {
-    unsigned int h = hash(name);
-    Symbol *s = hash_table[h];
-    while (s != NULL) {
-        if (strcmp(s->name, name) == 0) return s;
-        s = s->next;
+    while ((c = *name++) != 0) {
+        h = ((h << 5) + h) + (unsigned long)c;
     }
-    return NULL;
+    return (unsigned int)(h % HASH_SIZE);
 }
 
-Symbol* lookup_current_scope(char *name) {
-    unsigned int h = hash(name);
-    Symbol *s = hash_table[h];
-    while (s != NULL) {
-        if (strcmp(s->name, name) == 0 && s->scope_level == current_scope) {
-            return s;
+void symbol_table_init(SymbolTable *table) {
+    table->current = NULL;
+    table->depth = -1;
+    scope_enter(table);
+}
+
+void symbol_table_destroy(SymbolTable *table) {
+    while (table->current != NULL) {
+        scope_exit(table);
+    }
+}
+
+void scope_enter(SymbolTable *table) {
+    ScopeFrame *frame = (ScopeFrame *)calloc(1, sizeof(ScopeFrame));
+    if (frame == NULL) {
+        report_error(0, "SEMANTIC", "Failed to allocate scope frame");
+        exit(1);
+    }
+
+    frame->parent = table->current;
+    table->current = frame;
+    table->depth++;
+}
+
+void scope_exit(SymbolTable *table) {
+    ScopeFrame *frame = table->current;
+    if (frame == NULL) {
+        return;
+    }
+
+    for (int i = 0; i < HASH_SIZE; i++) {
+        free_record_chain(frame->buckets[i]);
+    }
+
+    table->current = frame->parent;
+    free(frame);
+    table->depth--;
+}
+
+SymbolRecord *symbol_lookup_local(const ScopeFrame *frame, const char *name) {
+    if (frame == NULL) {
+        return NULL;
+    }
+
+    unsigned int h = symbol_hash(name);
+    SymbolRecord *cur = frame->buckets[h];
+
+    while (cur != NULL) {
+        if (strcmp(cur->name, name) == 0) {
+            return cur;
         }
-        s = s->next;
+        cur = cur->next;
+    }
+
+    return NULL;
+}
+
+SymbolRecord *symbol_lookup(const SymbolTable *table, const char *name) {
+    const ScopeFrame *frame = table->current;
+    while (frame != NULL) {
+        SymbolRecord *hit = symbol_lookup_local(frame, name);
+        if (hit != NULL) {
+            return hit;
+        }
+        frame = frame->parent;
     }
     return NULL;
 }
 
-/* ADVANCED INSERT: Now using report_error */
-Symbol* insert(char *name, int token_class, int line, int scope) {
-    /* 1. Redeclaration Check */
-    if (lookup_current_scope(name) != NULL) {
-        char msg[100];
-        sprintf(msg, "Redeclaration of identifier '%s'", name);
-        
-        // Use the centralized handler instead of raw fprintf
+SymbolRecord *symbol_insert(SymbolTable *table, const char *name, TypeNode *type, int line) {
+    if (table->current == NULL) {
+        report_error(line, "SEMANTIC", "No active scope for insertion");
+        return NULL;
+    }
+
+    if (symbol_lookup_local(table->current, name) != NULL) {
+        char msg[160];
+        snprintf(msg, sizeof(msg), "Redeclaration of identifier '%s'", name);
         report_error(line, "SEMANTIC", msg);
-        return NULL; 
+        return NULL;
     }
 
-    /* 2. Allocation with Fatal Error Handling */
-    unsigned int h = hash(name);
-    Symbol *s = (Symbol*)malloc(sizeof(Symbol));
-    if (!s) {
-        report_error(line, "CRITICAL", "Memory allocation failed for Symbol Table");
-        exit(1); // Fatal OS error
+    SymbolRecord *rec = (SymbolRecord *)calloc(1, sizeof(SymbolRecord));
+    if (rec == NULL) {
+        report_error(line, "SEMANTIC", "Failed to allocate symbol record");
+        exit(1);
     }
 
-    s->name = strdup(name); 
-    s->token_class = token_class;
-    s->line_declared = line;
-    s->scope_level = scope;
-    
-    /* 3. Safe Defaults */
-    s->data_type = TYPE_NONE;
-    s->is_initialized = 0;   
-    s->memory_offset = -1;   
-    s->size = 0;             
-    s->value.i_val = 0;      
+    unsigned int h = symbol_hash(name);
+    snprintf(rec->name, sizeof(rec->name), "%s", name);
+    rec->type = type;
+    rec->scope_level = table->depth;
+    rec->line_declared = line;
+    rec->next = table->current->buckets[h];
+    table->current->buckets[h] = rec;
 
-    /* 4. Head-Insertion */
-    s->next = hash_table[h];
-    hash_table[h] = s;
-
-    return s;
+    return rec;
 }
 
-void print_symbol_table() {
-    printf("\n%-15s\t%-8s\t%-8s\t%-12s\t%-10s\t%-5s\n", 
-           "IDENTIFIER", "CLASS", "SCOPE", "INITIALIZED", "OFFSET", "LINE");
-    printf("--------------------------------------------------------------------------------\n");
-    for (int i = 0; i < TABLE_SIZE; i++) {
-        Symbol *s = hash_table[i];
-        while (s != NULL) {
-            printf("%-15s\t%-8d\t%-8d\t%-12s\t%-10d\t%-5d\n", 
-                   s->name, 
-                   s->token_class, 
-                   s->scope_level,
-                   s->is_initialized ? "Yes" : "No",
-                   s->memory_offset,
-                   s->line_declared);
-            s = s->next;
+void symbol_print(const SymbolTable *table) {
+    const ScopeFrame *frame = table->current;
+    int level = table->depth;
+
+    printf("\n=== SYMBOL TABLE DUMP ===\n");
+    while (frame != NULL) {
+        printf("Scope %d:\n", level);
+        printf("%-20s %-10s %-8s\n", "NAME", "TYPE", "DECL_LINE");
+
+        for (int i = 0; i < HASH_SIZE; i++) {
+            SymbolRecord *cur = frame->buckets[i];
+            while (cur != NULL) {
+                const char *kind = "UNKNOWN";
+                switch (cur->type ? cur->type->kind : TK_ERROR) {
+                    case TK_INT: kind = "INT"; break;
+                    case TK_FLOAT: kind = "FLOAT"; break;
+                    case TK_BOOL: kind = "BOOL"; break;
+                    case TK_ARRAY: kind = "ARRAY"; break;
+                    case TK_POINTER: kind = "POINTER"; break;
+                    case TK_VOID: kind = "VOID"; break;
+                    case TK_ERROR: kind = "ERROR"; break;
+                }
+
+                printf("%-20s %-10s %-8d\n", cur->name, kind, cur->line_declared);
+                cur = cur->next;
+            }
         }
+
+        frame = frame->parent;
+        level--;
     }
 }

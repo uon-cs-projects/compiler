@@ -17,6 +17,7 @@ INCLUDES = -Isrc -Isrc/lexer -Isrc/symbol_table -Isrc/error_handler -Isrc/parser
 SRCS = main.c \
        lexer_adapter.c \
        src/symbol_table/symbol_table.c \
+    src/symbol_table/type_system.c \
        src/error_handler/error_handler.c \
        src/parser/grammar.c \
        src/parser/first_follow.c \
@@ -31,6 +32,7 @@ GEN_SRC = src/lexer/lex.yy.c
 OBJS = main.o \
        lexer_adapter.o \
        src/symbol_table/symbol_table.o \
+    src/symbol_table/type_system.o \
        src/error_handler/error_handler.o \
        src/lexer/lex.yy.o \
        src/parser/grammar.o \
