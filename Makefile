@@ -11,6 +11,7 @@ CLEAN_CMD = $(RM) compiler$(EXE) *.o lexer_adapter.o main.o src/lexer/lex.yy.c s
 CC      = gcc
 LEX     = flex
 CFLAGS  = -Wall -Wextra -std=gnu99 -g
+CFLAGS_SUPPRESS = -Wno-unused-function
 INCLUDES = -Isrc -Isrc/lexer -Isrc/symbol_table -Isrc/error_handler -Isrc/parser -Isrc/parser/semantic -Isrc/icg -I.
 
 # --- File Paths ---
@@ -64,7 +65,7 @@ $(GEN_SRC): $(LEX_FILE)
 
 # Compile the generated Lexer
 src/lexer/lex.yy.o: $(GEN_SRC)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $(GEN_SRC) -o $@
+	$(CC) $(CFLAGS) $(CFLAGS_SUPPRESS) $(INCLUDES) -c $(GEN_SRC) -o $@
 
 # Compile standard C files to Object files
 %.o: %.c

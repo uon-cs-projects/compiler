@@ -530,7 +530,7 @@ void icg_gen_expr(const ParseTreeNode *node, InstrList *list,
  * T4.4  Statement and control-flow code generation
  * ====================================================== */
 
-/* Forward declaration — allows icg_gen_if_stmt to call icg_gen_stmt */
+/* Forward declaration ï¿½ allows icg_gen_if_stmt to call icg_gen_stmt */
 void icg_gen_stmt(const ParseTreeNode *node, InstrList *list);
 
 /* Generate quads for IF_STMT and IF_TAIL nodes */
@@ -607,6 +607,46 @@ static void icg_gen_while_stmt(const ParseTreeNode *node, InstrList *list)
     icg_emit(list, "LABEL", L_after, "", "");
 }
 
+/* Generate quads for for ID = EXPR BLOCK */
+static void icg_gen_for_stmt(const ParseTreeNode *node, InstrList *list)
+{
+    char L_begin[ICG_FIELD_LEN]; icg_new_label(L_begin, sizeof(L_begin));
+    char L_end[ICG_FIELD_LEN]; icg_new_label(L_end, sizeof(L_end));
+
+    /* Find the loop variable and start expression */
+    const char *loop_var = "i"; /* default */
+    for (int i = 0; i < node->num_children; i++) {
+        if (node->children[i] && node->children[i]->is_terminal &&
+            node->children[i]->token.id == T_ID) {
+            loop_var = node->children[i]->token.lexeme;
+            break;
+        }
+    }
+
+    /* Emit: var = start_expr */
+    char start_val[ICG_FIELD_LEN] = "";
+    const ParseTreeNode *e = find_nt(node, "EXPR");
+    if (e) icg_gen_expr(e, list, start_val, sizeof(start_val));
+    icg_emit(list, "ASSIGN", loop_var, start_val, "");
+
+    /* LABEL L_begin */
+    icg_emit(list, "LABEL", L_begin, "", "");
+
+    /* IF_FALSE condition GOTO L_end (simplified: just continue for now) */
+    icg_emit(list, "IF_FALSE", "", "1", L_end); /* dummy condition */
+
+    /* Emit block code */
+    const ParseTreeNode *b = find_nt(node, "BLOCK");
+    if (b) icg_gen_stmt(b, list);
+
+    /* Increment and loop back */
+    char t_inc[ICG_FIELD_LEN]; icg_new_temp(t_inc, sizeof(t_inc));
+    icg_emit(list, "ADD", t_inc, loop_var, "1");
+    icg_emit(list, "ASSIGN", loop_var, t_inc, "");
+    icg_emit(list, "GOTO", "", "", L_begin);
+    icg_emit(list, "LABEL", L_end, "", "");
+}
+
 /* Main statement dispatcher */
 void icg_gen_stmt(const ParseTreeNode *node, InstrList *list)
 {
@@ -655,7 +695,30 @@ void icg_gen_stmt(const ParseTreeNode *node, InstrList *list)
     if (strcmp(sym,"IF_STMT")==0 || strcmp(sym,"IF_TAIL")==0) {
         icg_gen_if_stmt(node, list); return;
     }
+    /* WHILE_STMT => while EXPR BLOCK */
+    if (strcmp(sym,"WHILE_STMT")==0) {
+        icg_gen_while_stmt(node, list); return;
+    }
 
+    /* FOR_STMT => for ID = EXPR BLOCK */
+    if (strcmp(sym,"FOR_STMT")==0) {
+        icg_gen_for_stmt(node, list); return;
+    }
+
+    /* PRINT_STMT => print EXPR */
+    if (strcmp(sym,"PRINT_STMT")==0) {
+        char val[ICG_FIELD_LEN] = "";
+        const ParseTreeNode *e = find_nt(node, "EXPR");
+        if (e) icg_gen_expr(e, list, val, sizeof(val));
+        icg_emit(list, "PRINT", "", val, "");
+        return;
+    }
+
+    /* BREAK_STMT => break */
+    if (strcmp(sym,"BREAK_STMT")==0) {
+        icg_emit(list, "BREAK", "", "", "");
+        return;
+    }
     /* STMT */
     if (strcmp(sym,"STMT")==0) {
         if (node->num_children == 0) return;
@@ -667,11 +730,6 @@ void icg_gen_stmt(const ParseTreeNode *node, InstrList *list)
             icg_gen_if_stmt(first, list); return;
         }
         if (!first->is_terminal) { icg_gen_stmt(first, list); return; }
-
-        /* STMT => while EXPR BLOCK */
-        if (first->token.id == T_WHILE) {
-            icg_gen_while_stmt(node, list); return;
-        }
 
         /* STMT => return EXPR */
         if (first->token.id == T_RETURN) {

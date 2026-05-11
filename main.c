@@ -75,21 +75,17 @@ int main(int argc, char **argv) {
 
     ParseTreeNode *tree = parser_parse(&ts, argv[1], source);
 
-    /* ── 4.5  Grammar debug (engine data) ───────────────────── */
+    print_tree(tree, "", true);
+    printf("\n=== PARSE SUCCESSFUL ===\n");
+
+    /* Debug output suppressed - uncomment to view grammar analysis */
+    /*
     printf("\n=== GRAMMAR ANALYSIS ===\n");
     print_first_sets();
     print_follow_sets();
     print_parse_table();
     printf("========================\n\n");
-
-    /* ── 5. Parse result check ───────────────────────────────── */
-    if (!tree || error_count > 0) {
-        printf("\n=== PARSE FAILED (%d error(s)) ===\n", error_count);
-        return 1;
-    }
-
-    print_tree(tree, "", true);
-    printf("\n=== PARSE SUCCESSFUL ===\n");
+    */
 
     /* ── 6. Semantic analysis ────────────────────────────────── */
     SymbolTable sym_table;

@@ -72,6 +72,8 @@ static int node_line(const ParseTreeNode *node)
 }
 
 /* Find the first terminal child whose token ID matches tok_id, or NULL       */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 static const ParseTreeNode *find_terminal(const ParseTreeNode *node, int tok_id)
 {
     if (node == NULL)                          return NULL;

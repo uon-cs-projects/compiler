@@ -5,6 +5,7 @@ const char *NONTERMINAL_NAMES[NONTERMINAL_COUNT] = {
     "PARAM_LIST", "PARAM_LIST_TAIL", "BLOCK",
     "STMT_LIST", "STMT", "STMT_ID_TAIL",
     "IF_STMT", "IF_TAIL",
+    "WHILE_STMT", "FOR_STMT", "PRINT_STMT", "BREAK_STMT",
     "EXPR", "EXPR_TAIL",
     "AND_EXPR", "AND_EXPR_TAIL",
     "NOT_EXPR",
@@ -100,6 +101,22 @@ void grammar_init(void) {
     PRODUCTIONS[i].rhs[1] = N(NT_EXPR);
     PRODUCTIONS[i].len = 2; i++;
 
+    PRODUCTIONS[i].lhs = NT_STMT;
+    PRODUCTIONS[i].rhs[0] = N(NT_WHILE_STMT);
+    PRODUCTIONS[i].len = 1; i++;
+
+    PRODUCTIONS[i].lhs = NT_STMT;
+    PRODUCTIONS[i].rhs[0] = N(NT_FOR_STMT);
+    PRODUCTIONS[i].len = 1; i++;
+
+    PRODUCTIONS[i].lhs = NT_STMT;
+    PRODUCTIONS[i].rhs[0] = N(NT_PRINT_STMT);
+    PRODUCTIONS[i].len = 1; i++;
+
+    PRODUCTIONS[i].lhs = NT_STMT;
+    PRODUCTIONS[i].rhs[0] = N(NT_BREAK_STMT);
+    PRODUCTIONS[i].len = 1; i++;
+
     PRODUCTIONS[i].lhs = NT_STMT_ID_TAIL;
     PRODUCTIONS[i].rhs[0] = T(T_ASSIGN);
     PRODUCTIONS[i].rhs[1] = N(NT_EXPR);
@@ -132,6 +149,29 @@ void grammar_init(void) {
 
     PRODUCTIONS[i].lhs = NT_IF_TAIL;
     PRODUCTIONS[i].len = 0; i++;
+
+    PRODUCTIONS[i].lhs = NT_WHILE_STMT;
+    PRODUCTIONS[i].rhs[0] = T(T_WHILE);
+    PRODUCTIONS[i].rhs[1] = N(NT_EXPR);
+    PRODUCTIONS[i].rhs[2] = N(NT_BLOCK);
+    PRODUCTIONS[i].len = 3; i++;
+
+    PRODUCTIONS[i].lhs = NT_FOR_STMT;
+    PRODUCTIONS[i].rhs[0] = T(T_FOR);
+    PRODUCTIONS[i].rhs[1] = T(T_ID);
+    PRODUCTIONS[i].rhs[2] = T(T_ASSIGN);
+    PRODUCTIONS[i].rhs[3] = N(NT_EXPR);
+    PRODUCTIONS[i].rhs[4] = N(NT_BLOCK);
+    PRODUCTIONS[i].len = 5; i++;
+
+    PRODUCTIONS[i].lhs = NT_PRINT_STMT;
+    PRODUCTIONS[i].rhs[0] = T(T_PRINT);
+    PRODUCTIONS[i].rhs[1] = N(NT_EXPR);
+    PRODUCTIONS[i].len = 2; i++;
+
+    PRODUCTIONS[i].lhs = NT_BREAK_STMT;
+    PRODUCTIONS[i].rhs[0] = T(T_BREAK);
+    PRODUCTIONS[i].len = 1; i++;
 
     PRODUCTIONS[i].lhs = NT_EXPR;
     PRODUCTIONS[i].rhs[0] = N(NT_AND_EXPR);
