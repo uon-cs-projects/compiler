@@ -27,7 +27,7 @@
 #include "src/parser/parse_tree.h"
 #include "src/symbol_table/symbol_table.h"
 #include "src/symbol_table/type_system.h"
-#include "src/lexer/tokens.h"
+#include "tokens.h"
 
 /* ══════════════════════════════════════════════════════════════════════════ *
  *  Internal helpers
@@ -46,10 +46,10 @@ static int is_boolean_compatible(const TypeNode *t)
     return t != NULL && (t->kind == TK_BOOL || t->kind == TK_INT);
 }
 
-/* True when a TypeNode is numeric (INT or FLOAT)                             */
+/* True when a TypeNode is numeric (INT or BOOL)                             */
 static int is_numeric(const TypeNode *t)
 {
-    return t != NULL && (t->kind == TK_INT || t->kind == TK_FLOAT);
+    return t != NULL && (t->kind == TK_INT || t->kind == TK_BOOL);
 }
 
 /* Emit a semantic error at the given line number via Member 1's handler      */
@@ -300,14 +300,7 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
 
         if (!is_numeric(left_type) || !is_numeric(right_type)) {
             sem_error(node_line(node), ERR_TYPE_MISMATCH,
-                      "Operands of * / must be numeric (INT or FLOAT)");
-            type_free(left_type);
-            type_free(right_type);
-            return error_type();
-        }
-        if (left_type->kind != right_type->kind) {
-            sem_error(node_line(node), ERR_TYPE_MISMATCH,
-                      "Mixed INT/FLOAT in multiplication/division");
+                      "Operands of + - must be numeric (INT or BOOL)");
             type_free(left_type);
             type_free(right_type);
             return error_type();
@@ -336,18 +329,12 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
 
         if (!is_numeric(left_type) || !is_numeric(right_type)) {
             sem_error(node_line(node), ERR_TYPE_MISMATCH,
-                      "Operands of + - must be numeric (INT or FLOAT)");
+                      "Operands of * / must be numeric (INT or BOOL)");
             type_free(left_type);
             type_free(right_type);
             return error_type();
         }
-        if (left_type->kind != right_type->kind) {
-            sem_error(node_line(node), ERR_TYPE_MISMATCH,
-                      "Type mismatch: cannot mix INT and FLOAT in arithmetic");
-            type_free(left_type);
-            type_free(right_type);
-            return error_type();
-        }
+
         type_free(right_type);
         return left_type;
     }

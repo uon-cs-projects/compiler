@@ -138,7 +138,6 @@ void symbol_print(const SymbolTable *table) {
                 const char *kind = "UNKNOWN";
                 switch (cur->type ? cur->type->kind : TK_ERROR) {
                     case TK_INT: kind = "INT"; break;
-                    case TK_FLOAT: kind = "FLOAT"; break;
                     case TK_BOOL: kind = "BOOL"; break;
                     case TK_ARRAY: kind = "ARRAY"; break;
                     case TK_POINTER: kind = "POINTER"; break;

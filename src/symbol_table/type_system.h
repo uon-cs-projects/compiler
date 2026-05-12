@@ -3,7 +3,6 @@
 
 typedef enum {
     TK_INT,
-    TK_FLOAT,
     TK_BOOL,
     TK_ARRAY,
     TK_POINTER,
