@@ -21,17 +21,22 @@ static ParseTreeNode *stack_peek_node(void) { return stk.tree_stack[stk.top]; }
 static void           stack_pop      (void) { if (stk.top >= 0) stk.top--;    }
 
 /* ── Error helpers (wrappers around error_handler) ─────────────── */
+static bool parse_error_flag = false;
 
 static void match_error(int expected_tok, const Token *got, const char *filename, const char *source_code) {
     error_match(expected_tok, got, filename, source_code);
+    parse_error_flag = true;
 }
 
 static void predict_error(int nt_idx, const Token *got, const char *filename, const char *source_code) {
     error_predict(nt_idx, got, filename, source_code);
+    parse_error_flag = true;
 }
 
 /* ── Main parse function ───────────────────────────────────────── */
 ParseTreeNode *parser_parse(TokenStream *ts, const char *filename, const char *source_code) {
+    parse_error_flag = false;
+
     /* Initialise stack:  push $  then  push start-symbol  */
     stk.top = -1;
     GrammarSymbol eof_sym   = { SYM_TERMINAL,    TOK_EOF    };
@@ -137,6 +142,11 @@ ParseTreeNode *parser_parse(TokenStream *ts, const char *filename, const char *s
         snprintf(msg, sizeof(msg),
                  "Unexpected token '%s' after end of program", la->lexeme);
         report_error(la->line, "SYNTAX", msg);
+        parse_error_flag = true;
+    }
+
+    if (parse_error_flag) {
+        return NULL;
     }
 
     return root;
