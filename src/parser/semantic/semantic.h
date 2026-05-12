@@ -81,8 +81,8 @@ TypeNode *type_from_parse_node(const ParseTreeNode *type_node);
  *
  * Implemented rules (T3.2):
  *   FACTOR → T_INT   ⟹ TK_INT
+ *   FACTOR → T_STR   ⟹ TK_STRING
  *   FACTOR → T_BOOL  ⟹ TK_BOOL
- *   FACTOR → T_STR   ⟹ TK_INT  (treated as integer-width for this grammar)
  *   FACTOR → T_ID    ⟹ symbol_lookup → declared type, else ERR_UNDECLARED
  *   MATH_EXPR / TERM with +,-,*,/ ⟹ both sides must be INT or FLOAT;
  *                                    mixed INT/FLOAT ⟹ ERR_TYPE_MISMATCH

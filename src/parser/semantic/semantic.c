@@ -52,6 +52,17 @@ static int is_numeric(const TypeNode *t)
     return t != NULL && (t->kind == TK_INT || t->kind == TK_BOOL);
 }
 
+/* True when a parser tail is the epsilon production represented as eps. */
+static int is_empty_tail(const ParseTreeNode *node)
+{
+    return node == NULL ||
+           node->num_children == 0 ||
+           (node->num_children == 1 &&
+            node->children[0] != NULL &&
+            !node->children[0]->is_terminal &&
+            strcmp(node->children[0]->symbol, "eps") == 0);
+}
+
 /* Emit a semantic error at the given line number via Member 1's handler      */
 static void sem_error(int line, int err_code, const char *msg)
 {
@@ -120,7 +131,7 @@ TypeNode *type_from_parse_node(const ParseTreeNode *type_node)
         switch (type_node->token.id) {
             case T_INT:   return type_make_basic(TK_INT);
             case T_BOOL:  return type_make_basic(TK_BOOL);
-            case T_STR:   return type_make_basic(TK_INT);  /* strings as ints */
+            case T_STR:   return type_make_basic(TK_STRING);
             default:
                 sem_error(type_node->token.line, ERR_TYPE_MISMATCH,
                           "Unrecognised type token in declaration");
@@ -140,7 +151,7 @@ TypeNode *type_from_parse_node(const ParseTreeNode *type_node)
             switch (child->token.id) {
                 case T_INT:   return type_make_basic(TK_INT);
                 case T_BOOL:  return type_make_basic(TK_BOOL);
-                case T_STR:   return type_make_basic(TK_INT);
+                case T_STR:   return type_make_basic(TK_STRING);
                 default:      break;
             }
         }
@@ -182,7 +193,7 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
         switch (node->token.id) {
             case T_INT:  return type_make_basic(TK_INT);
             case T_BOOL: return type_make_basic(TK_BOOL);
-            case T_STR:  return type_make_basic(TK_INT);   /* string literal  */
+            case T_STR:  return type_make_basic(TK_STRING);
             case T_ID: {
                 SymbolRecord *rec = symbol_lookup(table, node->token.lexeme);
                 if (rec == NULL) {
@@ -220,23 +231,29 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
             return inner ? typecheck_expr(inner, table) : error_type();
         }
 
-        /* FACTOR → int | bool | str                                         */
-        if (first->is_terminal) {
-            return typecheck_expr(first, table);
-        }
-
         /* FACTOR → id FACTOR_ID_TAIL                                        */
         if (first->is_terminal && first->token.id == T_ID) {
-            TypeNode *id_type = typecheck_expr(first, table);
             const ParseTreeNode *tail =
                 find_nonterminal(node, "FACTOR_ID_TAIL");
 
             if (tail == NULL || tail->num_children == 0) {
                 /* FACTOR_ID_TAIL → ε : plain identifier reference           */
-                return id_type;
+                return typecheck_expr(first, table);
             }
 
             const ParseTreeNode *tail_first = tail->children[0];
+            if (tail_first == NULL ||
+                (!tail_first->is_terminal && strcmp(tail_first->symbol, "eps") == 0)) {
+                return typecheck_expr(first, table);
+            }
+
+            /* FACTOR → id ( ARG_LIST )  (function call)                     */
+            if (tail_first->is_terminal && tail_first->token.id == T_LPAREN) {
+                /* Function signature checking is a future extension.         */
+                return type_make_basic(TK_INT);
+            }
+
+            TypeNode *id_type = typecheck_expr(first, table);
             if (tail_first->is_terminal &&
                 tail_first->token.id == T_LBRACKET) {
                 /* FACTOR → id [ EXPR ]  (array subscript)                   */
@@ -270,9 +287,13 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
                 return base;
             }
 
-            /* FACTOR → id ( ARG_LIST )  (function call) — return TK_INT    */
-            type_free(id_type);
-            return type_make_basic(TK_INT);
+            /* Unknown tail shape: degrade gracefully to identifier type.     */
+            return id_type;
+        }
+
+        /* FACTOR → int | bool | str                                         */
+        if (first->is_terminal) {
+            return typecheck_expr(first, table);
         }
 
         /* Fallback: recurse into first child                                */
@@ -286,10 +307,10 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
         const ParseTreeNode *factor = node->children[0];
         TypeNode *left_type = typecheck_expr(factor, table);
 
-        if (node->num_children < 2) return left_type;
+        if (node->num_children < 2 || is_empty_tail(node->children[1]))
+            return left_type;
 
         const ParseTreeNode *tail = node->children[1];
-        if (tail == NULL || tail->num_children == 0) return left_type;
 
         /* TERM_TAIL → ( * | / ) FACTOR TERM_TAIL                           */
         const ParseTreeNode *right_factor =
@@ -300,7 +321,7 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
 
         if (!is_numeric(left_type) || !is_numeric(right_type)) {
             sem_error(node_line(node), ERR_TYPE_MISMATCH,
-                      "Operands of + - must be numeric (INT or BOOL)");
+                      "Operands of * / must be numeric (INT or BOOL)");
             type_free(left_type);
             type_free(right_type);
             return error_type();
@@ -315,10 +336,10 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
 
         TypeNode *left_type = typecheck_expr(node->children[0], table);
 
-        if (node->num_children < 2) return left_type;
+        if (node->num_children < 2 || is_empty_tail(node->children[1]))
+            return left_type;
 
         const ParseTreeNode *tail = node->children[1];
-        if (tail == NULL || tail->num_children == 0) return left_type;
 
         /* MATH_EXPR_TAIL → ( + | - ) TERM MATH_EXPR_TAIL                   */
         const ParseTreeNode *right_term =
@@ -329,7 +350,7 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
 
         if (!is_numeric(left_type) || !is_numeric(right_type)) {
             sem_error(node_line(node), ERR_TYPE_MISMATCH,
-                      "Operands of * / must be numeric (INT or BOOL)");
+                      "Operands of + - must be numeric (INT or BOOL)");
             type_free(left_type);
             type_free(right_type);
             return error_type();
@@ -345,9 +366,7 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
 
         TypeNode *left_type = typecheck_expr(node->children[0], table);
 
-        if (node->num_children < 2 ||
-            node->children[1] == NULL ||
-            node->children[1]->num_children == 0) {
+        if (node->num_children < 2 || is_empty_tail(node->children[1])) {
             /* No comparison operator: propagate MATH_EXPR type              */
             return left_type;
         }
@@ -397,9 +416,7 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
 
         TypeNode *left = typecheck_expr(node->children[0], table);
 
-        if (node->num_children < 2 ||
-            node->children[1] == NULL ||
-            node->children[1]->num_children == 0) {
+        if (node->num_children < 2 || is_empty_tail(node->children[1])) {
             return left;
         }
 
@@ -425,9 +442,7 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
 
         TypeNode *left = typecheck_expr(node->children[0], table);
 
-        if (node->num_children < 2 ||
-            node->children[1] == NULL ||
-            node->children[1]->num_children == 0) {
+        if (node->num_children < 2 || is_empty_tail(node->children[1])) {
             return left;
         }
 
@@ -684,6 +699,49 @@ static void process_declarations(const ParseTreeNode *node, SymbolTable *table)
         return;
     }
 
+    /* ── FOR_STMT → for id = EXPR BLOCK ────────────────────────────────── */
+    if (strcmp(sym, "FOR_STMT") == 0) {
+        const ParseTreeNode *id_node = NULL;
+        const ParseTreeNode *init_expr = find_nonterminal(node, "EXPR");
+
+        for (int i = 0; i < node->num_children; i++) {
+            const ParseTreeNode *c = node->children[i];
+            if (c && c->is_terminal && c->token.id == T_ID) {
+                id_node = c;
+                break;
+            }
+        }
+
+        if (id_node && init_expr) {
+            TypeNode *init_type = typecheck_expr(init_expr, table);
+            SymbolRecord *existing = symbol_lookup_local(table->current,
+                                                         id_node->token.lexeme);
+
+            if (existing == NULL) {
+                if (init_type->kind == TK_ERROR) {
+                    type_free(init_type);
+                    init_type = type_make_basic(TK_INT);
+                }
+                symbol_insert(table, id_node->token.lexeme,
+                              init_type, id_node->token.line);
+            } else {
+                if (init_type->kind != TK_ERROR &&
+                    !type_equivalent(existing->type, init_type)) {
+                    char msg[160];
+                    snprintf(msg, sizeof(msg),
+                             "Type mismatch in for-loop initializer for '%s'",
+                             id_node->token.lexeme);
+                    sem_error(id_node->token.line, ERR_TYPE_MISMATCH, msg);
+                }
+                type_free(init_type);
+            }
+        }
+
+        const ParseTreeNode *body = find_nonterminal(node, "BLOCK");
+        if (body) process_declarations(body, table);
+        return;
+    }
+
     /* ── STMT → id STMT_ID_TAIL  (assignment ⟹ implicit declaration) ─────── */
     /*
      * This compiler's grammar has no explicit declaration syntax (no
@@ -736,13 +794,23 @@ static void process_declarations(const ParseTreeNode *node, SymbolTable *table)
             }
         }
 
+        int handled_assignment = 0;
+        if (id_node && id_node->is_terminal &&
+            id_node->token.id == T_ID &&
+            tail && tail->num_children >= 2) {
+            const ParseTreeNode *op = tail->children[0];
+            handled_assignment = (op && op->is_terminal && op->token.id == T_ASSIGN);
+        }
+
         /* Recurse into child nodes to catch nested blocks / if / while      */
         for (int i = 0; i < node->num_children; i++)
             process_declarations(node->children[i], table);
 
-        /* Also type-check the whole statement for other statement forms      */
-        TypeNode *void_t = typecheck_stmt(node, table);
-        type_free(void_t);
+        /* Also type-check statement forms not already handled above.         */
+        if (!handled_assignment) {
+            TypeNode *void_t = typecheck_stmt(node, table);
+            type_free(void_t);
+        }
         return;
     }
 
