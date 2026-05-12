@@ -26,7 +26,8 @@ NEWLINE  \n
 "else"          { yycolumn += yyleng; return T_ELSE; }
 "if"            { yycolumn += yyleng; return T_IF; }
 "while"         { yycolumn += yyleng; return T_WHILE; }
-"for"            { yycolumn += yyleng; return T_FOR; }
+"for"           { yycolumn += yyleng; return T_FOR; }
+"to"            { yycolumn += yyleng; return T_TO; }
 "return"        { yycolumn += yyleng; return T_RETURN; }
 "print"         { yycolumn += yyleng; return T_PRINT; }
 "break"         { yycolumn += yyleng; return T_BREAK; }

@@ -11,6 +11,7 @@
 #define T_RETURN    107  /* Keyword: 'return' (function exit) */
 #define T_PRINT     108  /* Keyword: 'print' (output to console) */
 #define T_BREAK     109  /* Keyword: 'break' (exit loop) */
+#define T_TO        110  /* Keyword: 'to' (for-loop range separator) */
 
 /* --- Logical Operators --- */
 #define T_AND       201  /* Logical Operator: 'and' */

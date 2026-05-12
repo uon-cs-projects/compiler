@@ -160,9 +160,11 @@ void grammar_init(void) {
     PRODUCTIONS[i].rhs[0] = T(T_FOR);
     PRODUCTIONS[i].rhs[1] = T(T_ID);
     PRODUCTIONS[i].rhs[2] = T(T_ASSIGN);
-    PRODUCTIONS[i].rhs[3] = N(NT_EXPR);
-    PRODUCTIONS[i].rhs[4] = N(NT_BLOCK);
-    PRODUCTIONS[i].len = 5; i++;
+    PRODUCTIONS[i].rhs[3] = N(NT_EXPR);   /* start */
+    PRODUCTIONS[i].rhs[4] = T(T_TO);
+    PRODUCTIONS[i].rhs[5] = N(NT_EXPR);   /* end */
+    PRODUCTIONS[i].rhs[6] = N(NT_BLOCK);
+    PRODUCTIONS[i].len = 7; i++;
 
     PRODUCTIONS[i].lhs = NT_PRINT_STMT;
     PRODUCTIONS[i].rhs[0] = T(T_PRINT);

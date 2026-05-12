@@ -1,12 +1,63 @@
 #include <stdio.h>
 #include "error_handler.h"
-
-#include "error_handler.h"
 #include "../parser/first_follow.h"
 
 #include "tokens.h"
 #include "error_context.h"
 #include "error_hints.h"
+
+static const char *friendly_nonterminal_name(int nt_idx) {
+    switch (nt_idx) {
+        case NT_PROGRAM:
+        case NT_PROGRAM_TAIL:
+            return "program";
+        case NT_ELEMENT:
+            return "top-level element";
+        case NT_FUNCTION:
+            return "function definition";
+        case NT_PARAM_LIST:
+        case NT_PARAM_LIST_TAIL:
+            return "parameter list";
+        case NT_BLOCK:
+            return "block";
+        case NT_STMT_LIST:
+            return "statement list";
+        case NT_STMT:
+            return "statement";
+        case NT_STMT_ID_TAIL:
+            return "assignment or function call";
+        case NT_IF_STMT:
+        case NT_IF_TAIL:
+            return "if statement";
+        case NT_WHILE_STMT:
+            return "while statement";
+        case NT_FOR_STMT:
+            return "for statement";
+        case NT_PRINT_STMT:
+            return "print statement";
+        case NT_BREAK_STMT:
+            return "break statement";
+        case NT_EXPR:
+        case NT_EXPR_TAIL:
+        case NT_AND_EXPR:
+        case NT_AND_EXPR_TAIL:
+        case NT_NOT_EXPR:
+        case NT_COMP_EXPR:
+        case NT_COMP_EXPR_TAIL:
+        case NT_MATH_EXPR:
+        case NT_MATH_EXPR_TAIL:
+        case NT_TERM:
+        case NT_TERM_TAIL:
+        case NT_FACTOR:
+        case NT_FACTOR_ID_TAIL:
+            return "expression";
+        case NT_ARG_LIST:
+        case NT_ARG_LIST_TAIL:
+            return "argument list";
+        default:
+            return "syntax";
+    }
+}
 
 int error_count = 0;
 int warning_count = 0;
@@ -95,28 +146,17 @@ void error_predict(int nt_idx, const Token *got, const char *filename, const cha
             got->lexeme, ctx.line, ctx.col);
     fprintf(stderr, "%d | %s\n", ctx.line, ctx.source_line);
     fprintf(stderr, "   | %s\n", ctx.caret);
-    fprintf(stderr, "Unexpected token while parsing %s.\n", NONTERMINAL_NAMES[nt_idx]);
+    fprintf(stderr, "Unexpected token while parsing %s.\n", friendly_nonterminal_name(nt_idx));
     fprintf(stderr, "Hint: %s\n", error_get_hint(ctx.err_code));
     fprintf(stderr, "\n");
 }
 
 Token *error_recover(int nt_idx, TokenStream *ts) {
-    /* Get current token based on the stream position */
-    Token *current_tok = &ts->tokens[ts->pos];
-    
-    fprintf(stderr, "  Panic Mode: Skipping tokens until FOLLOW(%s)...\n", 
-            NONTERMINAL_NAMES[nt_idx]);
-
-    /* * Loop until we find a token in the FOLLOW set of the current non-terminal,
-     * or we run out of tokens in the stream.
-     */
     while (ts->pos < ts->count) {
-        current_tok = &ts->tokens[ts->pos];
+        Token *current_tok = &ts->tokens[ts->pos];
 
         /* If token is in FOLLOW set, we've found a synchronization point */
         if (follow_sets[nt_idx][current_tok->id]) {
-            fprintf(stderr, "  Recovered at: '%s' (Line %d)\n", 
-                    current_tok->lexeme, current_tok->line);
             return current_tok;
         }
 
@@ -124,5 +164,8 @@ Token *error_recover(int nt_idx, TokenStream *ts) {
         ts->pos++;
     }
 
-    return &ts->tokens[ts->pos]; // Returns the last token (usually EOF)
+    if (ts->count > 0) {
+        return &ts->tokens[ts->count - 1];
+    }
+    return NULL;
 }

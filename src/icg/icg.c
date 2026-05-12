@@ -607,14 +607,14 @@ static void icg_gen_while_stmt(const ParseTreeNode *node, InstrList *list)
     icg_emit(list, "LABEL", L_after, "", "");
 }
 
-/* Generate quads for for ID = EXPR BLOCK */
+/* Generate quads for for ID = EXPR to EXPR BLOCK */
 static void icg_gen_for_stmt(const ParseTreeNode *node, InstrList *list)
 {
     char L_begin[ICG_FIELD_LEN]; icg_new_label(L_begin, sizeof(L_begin));
-    char L_end[ICG_FIELD_LEN]; icg_new_label(L_end, sizeof(L_end));
+    char L_end[ICG_FIELD_LEN];   icg_new_label(L_end,   sizeof(L_end));
 
-    /* Find the loop variable and start expression */
-    const char *loop_var = "i"; /* default */
+    /* Find loop variable */
+    const char *loop_var = "_i";
     for (int i = 0; i < node->num_children; i++) {
         if (node->children[i] && node->children[i]->is_terminal &&
             node->children[i]->token.id == T_ID) {
@@ -623,19 +623,33 @@ static void icg_gen_for_stmt(const ParseTreeNode *node, InstrList *list)
         }
     }
 
-    /* Emit: var = start_expr */
+    /* Find start and end EXPR children */
+    const ParseTreeNode *start_expr = NULL;
+    const ParseTreeNode *end_expr   = NULL;
+    for (int i = 0; i < node->num_children; i++) {
+        const ParseTreeNode *c = node->children[i];
+        if (c && !c->is_terminal && strcmp(c->symbol, "EXPR") == 0) {
+            if (!start_expr) start_expr = c;
+            else             { end_expr = c; break; }
+        }
+    }
+
+    /* ASSIGN loop_var = start */
     char start_val[ICG_FIELD_LEN] = "";
-    const ParseTreeNode *e = find_nt(node, "EXPR");
-    if (e) icg_gen_expr(e, list, start_val, sizeof(start_val));
+    if (start_expr) icg_gen_expr(start_expr, list, start_val, sizeof(start_val));
     icg_emit(list, "ASSIGN", loop_var, start_val, "");
 
-    /* LABEL L_begin */
+    /* L_begin: */
     icg_emit(list, "LABEL", L_begin, "", "");
 
-    /* IF_FALSE condition GOTO L_end (simplified: just continue for now) */
-    icg_emit(list, "IF_FALSE", "", "1", L_end); /* dummy condition */
+    /* Evaluate end expression and check loop condition: loop_var <= end */
+    char end_val[ICG_FIELD_LEN] = "";
+    if (end_expr) icg_gen_expr(end_expr, list, end_val, sizeof(end_val));
+    char t_cond[ICG_FIELD_LEN]; icg_new_temp(t_cond, sizeof(t_cond));
+    icg_emit(list, "LE", t_cond, loop_var, end_val);
+    icg_emit(list, "IF_FALSE", "", t_cond, L_end);
 
-    /* Emit block code */
+    /* Body */
     const ParseTreeNode *b = find_nt(node, "BLOCK");
     if (b) icg_gen_stmt(b, list);
 

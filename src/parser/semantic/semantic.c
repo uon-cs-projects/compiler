@@ -249,7 +249,15 @@ TypeNode *typecheck_expr(const ParseTreeNode *node, SymbolTable *table)
 
             /* FACTOR → id ( ARG_LIST )  (function call)                     */
             if (tail_first->is_terminal && tail_first->token.id == T_LPAREN) {
-                /* Function signature checking is a future extension.         */
+                SymbolRecord *rec =
+                    symbol_lookup(table, first->token.lexeme);
+                if (rec == NULL) {
+                    char msg[160];
+                    snprintf(msg, sizeof(msg),
+                             "Call to undeclared function '%s'",
+                             first->token.lexeme);
+                    sem_error(first->token.line, ERR_UNDECLARED, msg);
+                }
                 return type_make_basic(TK_INT);
             }
 
@@ -526,11 +534,18 @@ TypeNode *typecheck_stmt(const ParseTreeNode *node, SymbolTable *table)
             return type_make_basic(TK_VOID);
         }
 
-        /* STMT → id ( ARG_LIST ) : function-call statement – just check args */
+        /* STMT → id ( ARG_LIST ) : function-call statement */
         if (tail_first->is_terminal &&
             tail_first->token.id == T_LPAREN) {
-            /* Argument type-checking is a future extension;
-             * for now just walk the arg list to catch undeclared uses.      */
+            SymbolRecord *rec =
+                symbol_lookup(table, id_node->token.lexeme);
+            if (rec == NULL) {
+                char msg[160];
+                snprintf(msg, sizeof(msg),
+                         "Call to undeclared function '%s'",
+                         id_node->token.lexeme);
+                sem_error(id_node->token.line, ERR_UNDECLARED, msg);
+            }
             return type_make_basic(TK_VOID);
         }
     }
@@ -647,6 +662,24 @@ static void process_declarations(const ParseTreeNode *node, SymbolTable *table)
     /* ── FUNCTION → def id ( PARAM_LIST ) BLOCK ─────────────────────────── */
     if (strcmp(sym, "FUNCTION") == 0) {
         /*
+         * Register the function name in the current (outer) scope so callers
+         * can look it up.  We use TK_VOID as the placeholder type because the
+         * grammar has no return-type annotation.
+         */
+        const ParseTreeNode *fn_id = NULL;
+        for (int i = 0; i < node->num_children; i++) {
+            const ParseTreeNode *c = node->children[i];
+            if (c && c->is_terminal && c->token.id == T_ID) {
+                fn_id = c;
+                break;
+            }
+        }
+        if (fn_id) {
+            symbol_insert(table, fn_id->token.lexeme,
+                          type_make_basic(TK_VOID), fn_id->token.line);
+        }
+
+        /*
          * Open a scope for the function body so that parameters and local
          * variables don't leak into the enclosing scope.
          * The BLOCK child will open another scope for its own body; we open
@@ -699,11 +732,11 @@ static void process_declarations(const ParseTreeNode *node, SymbolTable *table)
         return;
     }
 
-    /* ── FOR_STMT → for id = EXPR BLOCK ────────────────────────────────── */
+    /* ── FOR_STMT → for id = EXPR to EXPR BLOCK ──────────────────────── */
     if (strcmp(sym, "FOR_STMT") == 0) {
         const ParseTreeNode *id_node = NULL;
-        const ParseTreeNode *init_expr = find_nonterminal(node, "EXPR");
 
+        /* Find the loop variable */
         for (int i = 0; i < node->num_children; i++) {
             const ParseTreeNode *c = node->children[i];
             if (c && c->is_terminal && c->token.id == T_ID) {
@@ -712,29 +745,46 @@ static void process_declarations(const ParseTreeNode *node, SymbolTable *table)
             }
         }
 
-        if (id_node && init_expr) {
-            TypeNode *init_type = typecheck_expr(init_expr, table);
+        /* Find both EXPR children: first is start, second is end */
+        const ParseTreeNode *start_expr = NULL;
+        const ParseTreeNode *end_expr   = NULL;
+        for (int i = 0; i < node->num_children; i++) {
+            const ParseTreeNode *c = node->children[i];
+            if (c && !c->is_terminal && strcmp(c->symbol, "EXPR") == 0) {
+                if (!start_expr) start_expr = c;
+                else             { end_expr = c; break; }
+            }
+        }
+
+        if (id_node && start_expr) {
+            TypeNode *start_type = typecheck_expr(start_expr, table);
+            if (start_type->kind != TK_INT && start_type->kind != TK_ERROR) {
+                char msg[160];
+                snprintf(msg, sizeof(msg),
+                         "For-loop start expression for '%s' must be INT",
+                         id_node->token.lexeme);
+                sem_error(id_node->token.line, ERR_TYPE_MISMATCH, msg);
+            }
+            type_free(start_type);
+
             SymbolRecord *existing = symbol_lookup_local(table->current,
                                                          id_node->token.lexeme);
-
-            if (existing == NULL) {
-                if (init_type->kind == TK_ERROR) {
-                    type_free(init_type);
-                    init_type = type_make_basic(TK_INT);
-                }
+            if (existing == NULL)
                 symbol_insert(table, id_node->token.lexeme,
-                              init_type, id_node->token.line);
-            } else {
-                if (init_type->kind != TK_ERROR &&
-                    !type_equivalent(existing->type, init_type)) {
-                    char msg[160];
-                    snprintf(msg, sizeof(msg),
-                             "Type mismatch in for-loop initializer for '%s'",
-                             id_node->token.lexeme);
-                    sem_error(id_node->token.line, ERR_TYPE_MISMATCH, msg);
-                }
-                type_free(init_type);
+                              type_make_basic(TK_INT), id_node->token.line);
+        }
+
+        if (end_expr) {
+            TypeNode *end_type = typecheck_expr(end_expr, table);
+            if (end_type->kind != TK_INT && end_type->kind != TK_ERROR) {
+                char msg[160];
+                snprintf(msg, sizeof(msg),
+                         "For-loop end expression for '%s' must be INT",
+                         id_node ? id_node->token.lexeme : "?");
+                sem_error(id_node ? id_node->token.line : 0,
+                          ERR_TYPE_MISMATCH, msg);
             }
+            type_free(end_type);
         }
 
         const ParseTreeNode *body = find_nonterminal(node, "BLOCK");
