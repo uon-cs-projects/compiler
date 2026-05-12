@@ -75,8 +75,12 @@ int main(int argc, char **argv) {
 
     ParseTreeNode *tree = parser_parse(&ts, argv[1], source);
 
-    print_tree(tree, "", true);
-    printf("\n=== PARSE SUCCESSFUL ===\n");
+    if (tree) {
+        print_tree(tree, "", true);
+        printf("\n=== PARSE SUCCESSFUL ===\n");
+    } else {
+        printf("\n=== PARSE FAILED ===\n");
+    }
 
     printf("\n=== GRAMMAR ANALYSIS ===\n");
     print_first_sets();
@@ -84,22 +88,29 @@ int main(int argc, char **argv) {
     print_parse_table();
     printf("========================\n\n");
 
-    /* ── 6. Semantic analysis ────────────────────────────────── */
+    /* ── 5. Semantic analysis ─────────────────────────────────
+     * Always runs when a parse tree exists — collects ALL type and
+     * declaration errors even when lexical/parse errors already exist. */
     SymbolTable sym_table;
     symbol_table_init(&sym_table);
 
-    int sem_errors = semantic_analyse(tree, &sym_table);
+    if (tree) {
+        semantic_analyse(tree, &sym_table);
+        symbol_print(&sym_table);   /* dump symbol table for demo */
+    }
 
-    symbol_print(&sym_table);   /* dump symbol table for demo */
-
-    if (sem_errors > 0) {
-        printf("\n=== SEMANTIC FAILED (%d error(s)) ===\n", sem_errors);
+    /* ── 6. ICG gate ────────────────────────────────────────────
+     * error_count accumulates ALL errors across every phase above
+     * (lexical, parse, semantic). ICG only runs when it is zero.  */
+    if (error_count > 0) {
+        printf("\n=== COMPILATION FAILED: %d error(s) — ICG skipped ===\n",
+               error_count);
         symbol_table_destroy(&sym_table);
         return 1;
     }
-    printf("\n=== SEMANTIC OK ===\n");
 
     /* ── 7. Intermediate Code Generation ────────────────────── */
+    printf("\n=== SEMANTIC OK ===\n");
     InstrList *ilist = icg_list_create();
     icg_gen_stmt(tree, ilist);
 
