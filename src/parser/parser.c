@@ -57,7 +57,7 @@ ParseTreeNode *parser_parse(TokenStream *ts, const char *filename, const char *s
         if (top.kind  == SYM_TERMINAL &&
             top.index == TOK_EOF      &&
             la->id  == TOK_EOF) {
-            return root;
+            return parse_error_flag ? NULL : root;
         }
 
         /* ── MATCH: top is a terminal ─────────────────── */

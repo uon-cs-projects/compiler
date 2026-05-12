@@ -1,15 +1,5 @@
-def calc(a, b, c) {
-    t1 = a + b * c
-    t2 = (a + b) * (c - 1)
-    t3 = (t1 > t2) and not (a == 0)
-    if t3 or (b == 2) {
-        return t1
-    } else if (t2 == t1) {
-        return t2
-    } else {
-        return a
-    }
+x = 5
+while5 (x > 2) {
+    print(x)
+    x = x - 1
 }
-
-x = calc(2, 3, 4)
-print(x)
