@@ -78,14 +78,11 @@ int main(int argc, char **argv) {
     print_tree(tree, "", true);
     printf("\n=== PARSE SUCCESSFUL ===\n");
 
-    /* Debug output suppressed - uncomment to view grammar analysis */
-    /*
     printf("\n=== GRAMMAR ANALYSIS ===\n");
     print_first_sets();
     print_follow_sets();
     print_parse_table();
     printf("========================\n\n");
-    */
 
     /* ── 6. Semantic analysis ────────────────────────────────── */
     SymbolTable sym_table;
